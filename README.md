@@ -29,11 +29,16 @@ git clone https://github.com/yeulam1thienthan/Show-Attend-and-Tell-Pytorch-Imple
 
 ### Try on a BDD100K image
 - BDD100K is a new driving dataset released by Berkerly with rich annotations and for multiple novel tasks in DL.
-- Input image
+- **Input image**
+
 ![](./img/red_car.jpg)
-- Output image
+
+- **Output image**
+
 ![](./img/red_car_caption.png)
-*** It should be noted that at this time I run these commands, the epochs are just 10 (not the optimal epochs), then the caption might not be really good (BLEU-4  = 0.23), you could retrain longer to better your model.
+
+- **It should be noted that at this time I run these commands, the epochs are just 10 (not the optimal epochs), then the caption might not be really good (BLEU-4  = 0.23), you could retrain longer to better your model.**
+
 # Contents
 
 [***Objective***](https://github.com/sgrvinod/a-PyTorch-Tutorial-to-Image-Captioning#objective)
