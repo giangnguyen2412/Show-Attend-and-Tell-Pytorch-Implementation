@@ -476,11 +476,12 @@ With the release of PyTorch `0.4`, wrapping tensors as `Variable`s is no longer 
 
 # How retrain the model
 This is to guide newcomers how to retrain the model from beginning without reading code and change some points.
-First, clone the repository and dataset to the same directory: 
+
+- First, clone the repository and dataset to the same directory: 
 git clone https://github.com/yeulam1thienthan/Show-Attend-and-Tell-Pytorch-Implementation.git
-Download and extract caption_datasets.zip to the same directory and rename to "caption data" directory
+- Download and extract caption_datasets.zip to the same directory and rename to "caption data" directory
 [Andrej Karpathy's training, validation, and test splits](http://cs.stanford.edu/people/karpathy/deepimagesent/caption_datasets.zip).
-Download and extract val2014 and train2014 to 'caption data/'
+- Download and extract val2014 and train2014 to 'caption data/'
 [Training (13GB)](http://images.cocodataset.org/zips/train2014.zip) and [Validation (6GB)](http://images.cocodataset.org/zips/val2014.zip) images.
-Second: Run python create_input_files.py
-Last: run python train.py to re-train the model.
+- Second: Run python create_input_files.py
+- Last: run python train.py to re-train the model.
