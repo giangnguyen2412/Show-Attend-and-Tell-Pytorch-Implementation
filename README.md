@@ -25,9 +25,15 @@ git clone https://github.com/yeulam1thienthan/Show-Attend-and-Tell-Pytorch-Imple
 - It should be noted that the input image to be captioned must be in JPG format. If not, the dimension will not match.
 - After some epochs, you now get the model BEST_checkpoint_coco_5_cap_per_img_5_min_word_freq.pth.tar in the repo directory. 
 - Run the following command to infer a new image: `python caption.py --img='img/PARROTS.JPG' --model='BEST_checkpoint_coco_5_cap_per_img_5_min_word_freq.pth.tar' --word_map='../caption data/WORDMAP_coco_5_cap_per_img_5_min_word_freq.json' --beam_size=5`
-- Result
 ![](./img/parrot_caption.png)
 
+### Try on a BDD100K image
+- BDD100K is a new driving dataset released by Berkerly with rich annotations and for multiple novel tasks in DL.
+- Input image
+![](./img/red_car.jpg)
+- Output image
+![](./img/red_car_caption.png)
+*** It should be noted that at this time I run these commands, the epochs are just 10 (not the optimal epochs), then the caption might not be really good (BLEU-4  = 0.23), you could retrain longer to better your model.
 # Contents
 
 [***Objective***](https://github.com/sgrvinod/a-PyTorch-Tutorial-to-Image-Captioning#objective)
