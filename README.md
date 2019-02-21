@@ -9,6 +9,22 @@ If you're new to PyTorch, first read [Deep Learning with PyTorch: A 60 Minute Bl
 Questions, suggestions, or corrections can be posted as issues.
 
 I'm using `PyTorch 0.4` in `Python 3.6`.
+# How to retrain the model
+This is to guide newcomers how to retrain the model from beginning without reading code and change some points.
+
+- First, clone the repository and dataset to the same directory: 
+git clone https://github.com/yeulam1thienthan/Show-Attend-and-Tell-Pytorch-Implementation.git
+- Download and extract caption_datasets.zip to the same directory and rename to "caption data" directory
+[Andrej Karpathy's training, validation, and test splits](http://cs.stanford.edu/people/karpathy/deepimagesent/caption_datasets.zip).
+- Download and extract val2014 and train2014 to 'caption data/'
+[Training (13GB)](http://images.cocodataset.org/zips/train2014.zip) and [Validation (6GB)](http://images.cocodataset.org/zips/val2014.zip) images.
+- Second: Run `python create_input_files.py`
+- Last: run `python train.py` to re-train the model.
+
+### Run on a custom image
+- It should be noted that the input image to be captioned must be in JPG format. If not, the dimension will not match.
+- After some epochs, you now get the model BEST_checkpoint_coco_5_cap_per_img_5_min_word_freq.pth.tar in the repo directory. 
+- Run the following command to infer a new image: `python caption.py --img='img/PARROTS.JPG' --model='BEST_checkpoint_coco_5_cap_per_img_5_min_word_freq.pth.tar' --word_map='../caption data/WORDMAP_coco_5_cap_per_img_5_min_word_freq.json' --beam_size=5`
 
 # Contents
 
@@ -473,3 +489,4 @@ With the release of PyTorch `0.4`, wrapping tensors as `Variable`s is no longer 
 - By default, when you create a tensor from scratch, `requires_grad` will be set to `False`.
 - When a tensor is created from or modified using another tensor that allows gradients, then `requires_grad` will be set to `True`.
 - Tensors which are parameters of `torch.nn` layers will already have `requires_grad` set to `True`.
+
