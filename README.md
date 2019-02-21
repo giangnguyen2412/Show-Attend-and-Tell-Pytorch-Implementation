@@ -37,6 +37,7 @@ git clone https://github.com/yeulam1thienthan/Show-Attend-and-Tell-Pytorch-Imple
 
 ![](./img/red_car_caption.png)
 
+- The caption seem to be a bit general since we are not training the model on BDD100K but on MS-COCO dataset instead. Next will be a short guide showing how to train this model on a custom dataset.
 - **It should be noted that at this time I run these commands, the epochs are just 10 (not the optimal epochs), then the caption might not be really good (BLEU-4  = 0.23), you could retrain longer to better your model.**
 
 # Contents
