@@ -9,7 +9,7 @@ If you're new to PyTorch, first read [Deep Learning with PyTorch: A 60 Minute Bl
 Questions, suggestions, or corrections can be posted as issues.
 
 I'm using `PyTorch 0.4` in `Python 3.6`.
-# How retrain the model
+# How to retrain the model
 This is to guide newcomers how to retrain the model from beginning without reading code and change some points.
 
 - First, clone the repository and dataset to the same directory: 
