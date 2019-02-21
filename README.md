@@ -21,6 +21,11 @@ git clone https://github.com/yeulam1thienthan/Show-Attend-and-Tell-Pytorch-Imple
 - Second: Run python create_input_files.py
 - Last: run python train.py to re-train the model.
 
+### Run on a custom image
+- It should be noted that the input image to be captioned must be in JPG format. If not, the dimension will not match.
+- After some epochs, you now get the model BEST_checkpoint_coco_5_cap_per_img_5_min_word_freq.pth.tar in the repo directory. 
+- Run the following command to infer a new image: python caption.py --img='img/PARROTS.JPG' --model='BEST_checkpoint_coco_5_cap_per_img_5_min_word_freq.pth.tar' --word_map='../caption data/WORDMAP_coco_5_cap_per_img_5_min_word_freq.json' --beam_size=5
+
 # Contents
 
 [***Objective***](https://github.com/sgrvinod/a-PyTorch-Tutorial-to-Image-Captioning#objective)
