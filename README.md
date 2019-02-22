@@ -3,17 +3,17 @@ I'm using `PyTorch 0.4` in `Python 3.6`.
 This is to guide newcomers how to retrain the model from beginning without reading code and change some points.
 
 - First, clone the repository and dataset to the same directory: 
-git clone https://github.com/yeulam1thienthan/Show-Attend-and-Tell-Pytorch-Implementation.git
-- Download and extract caption_datasets.zip to the same directory and rename to "caption data" directory
+`git clone https://github.com/yeulam1thienthan/Show-Attend-and-Tell-Pytorch-Implementation.git`
+- Download and extract `caption_datasets.zip` to the same directory and rename to `caption data` directory
 [Andrej Karpathy's training, validation, and test splits](http://cs.stanford.edu/people/karpathy/deepimagesent/caption_datasets.zip).
-- Download and extract val2014 and train2014 to 'caption data/'
+- Download and extract val2014 and train2014 to `caption data/`
 [Training (13GB)](http://images.cocodataset.org/zips/train2014.zip) and [Validation (6GB)](http://images.cocodataset.org/zips/val2014.zip) images.
 - Second: Run `python create_input_files.py`
 - Last: run `python train.py` to re-train the model.
 
 ### Run on a custom image
 - It should be noted that the input image to be captioned must be in JPG format. If not, the dimension will not match.
-- After some epochs, you now get the model BEST_checkpoint_coco_5_cap_per_img_5_min_word_freq.pth.tar in the repo directory. 
+- After some epochs, you now get the model `BEST_checkpoint_coco_5_cap_per_img_5_min_word_freq.pth.tar` in the repo directory. 
 - Run the following command to infer a new image: `python caption.py --img='img/PARROTS.JPG' --model='BEST_checkpoint_coco_5_cap_per_img_5_min_word_freq.pth.tar' --word_map='../caption data/WORDMAP_coco_5_cap_per_img_5_min_word_freq.json' --beam_size=5`
 ![](./img/parrot_caption.png)
 
