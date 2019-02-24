@@ -494,7 +494,8 @@ With the release of PyTorch `0.4`, wrapping tensors as `Variable`s is no longer 
 - When a tensor is created from or modified using another tensor that allows gradients, then `requires_grad` will be set to `True`.
 - Tensors which are parameters of `torch.nn` layers will already have `requires_grad` set to `True`.
 
-__BLEU-n calculation?__
+__BLEU-n calculation?__(kmario23)
+
 The current codebase uses NLTK to calculate BLEU-4 scores. However, BLEU-1 to BLEU-n can be easily implemented, if you want to do that yourself. If you don't want to do that, you can then simply use NLTK for doing this which provides a nice interface to achieve this. (see code below)
 
 Here is the explanation of how BLEU score computation is defined:
