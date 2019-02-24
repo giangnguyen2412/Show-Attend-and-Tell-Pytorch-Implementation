@@ -494,3 +494,47 @@ With the release of PyTorch `0.4`, wrapping tensors as `Variable`s is no longer 
 - When a tensor is created from or modified using another tensor that allows gradients, then `requires_grad` will be set to `True`.
 - Tensors which are parameters of `torch.nn` layers will already have `requires_grad` set to `True`.
 
+__BLEU-n calculation?__
+The current codebase uses NLTK to calculate BLEU-4 scores. However, BLEU-1 to BLEU-n can be easily implemented, if you want to do that yourself. If you don't want to do that, you can then simply use NLTK for doing this which provides a nice interface to achieve this. (see code below)
+
+Here is the explanation of how BLEU score computation is defined:
+
+`BLEU-n` is just the geometric average of the n-gram _precision_.
+
+> (precisely it's string matching, at different n-gram levels,  between _references_ and _hypotheses_; that's why there has been much criticism on this metric. But, people still use it anyways because it has _stuck with the community_ for ages)
+
+For example, `BLEU-1` is simply the unigram precision, `BLEU-2` is the geometric average of unigram and bigram precision, `BLEU-3` is the geometric average of unigram, bigram, and trigram precision and so on.
+
+Having said that, if you want to compute specific n-gram BLEU scores, you have to pass a `weights` parameter when you [call `corpus_bleu`](https://github.com/sgrvinod/a-PyTorch-Tutorial-to-Image-Captioning/blob/master/eval.py#L171) . Note that if you ignore passing this `weights` parameter, then by default BLEU-4 scores are returned, which is what happening in the evaluation here.
+
+To compute, `BLEU-1` you can [call `copus_bleu`](https://github.com/sgrvinod/a-PyTorch-Tutorial-to-Image-Captioning/blob/master/eval.py#L171) with `weights` as
+
+```
+weights = (1.0/1.0, )
+corpus_bleu(references, hypotheses, weights)
+```
+To compute, `BLEU-2` you can [call `corpus_bleu`](https://github.com/sgrvinod/a-PyTorch-Tutorial-to-Image-Captioning/blob/master/eval.py#L171) with `weights` as
+
+```
+weights=(1.0/2.0, 1.0/2.0,)
+corpus_bleu(references, hypotheses, weights)
+```
+To compute, `BLEU-3` you can [call `corpus_bleu`](https://github.com/sgrvinod/a-PyTorch-Tutorial-to-Image-Captioning/blob/master/eval.py#L171) with `weights` as
+
+```
+weights=(1.0/3.0, 1.0/3.0, 1.0/3.0,)
+corpus_bleu(references, hypotheses, weights)
+```
+To compute, `BLEU-5` you can [call `corpus_bleu`](https://github.com/sgrvinod/a-PyTorch-Tutorial-to-Image-Captioning/blob/master/eval.py#L171) with `weights` as
+
+```
+weights=(1.0/5.0, 1.0/5.0, 1.0/5.0, 1.0/5.0, 1.0/5.0,)
+corpus_bleu(references, hypotheses, weights)
+```
+Here is a demonstration using a toy example adapted from NLTK webpage:
+
+![bleu-n-grams](https://user-images.githubusercontent.com/5196297/51448959-1f271e00-1d2a-11e9-9b9a-ab3f94cceb9b.png)
+
+Note how the BLEU score keeps decreasing as we increase the number `n` in n-grams using the `weights` parameter. Also, note how not passing the `weights` parameter yields the same score as passing a `weights` parameter for quadrigram because that's the default weight NLTK passes, if we don't pass one.
+
+Refer this page for more information on the [NLTK BLEU score implementation](https://www.nltk.org/_modules/nltk/translate/bleu_score.html)
