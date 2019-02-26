@@ -19,6 +19,7 @@ This is to guide newcomers how to retrain the model from beginning without readi
 
 ### Try on a BDD100K image
 - BDD100K is a new driving dataset released by Berkerly with rich annotations and for multiple novel tasks in DL.
+- Image captioning for BDD100K
 - **Input image**
 
 ![](./img/red_car.jpg)
