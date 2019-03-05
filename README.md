@@ -28,7 +28,7 @@ This is to guide newcomers how to retrain the model from beginning without readi
 
 ![](./img/red_car_caption.png)
 
-- The caption seem to be a bit general since we are not training the model on BDD100K but on MS-COCO dataset instead. Next will be a short guide showing how to train this model on a custom dataset.
+- The caption seem to be a bit general since we are not training the model on BDD100K but on MS-COCO dataset instead. Next will be a short guide showing how to train this model on a custom dataset. If you want to know more about how dataset is processed, take a look here: https://machinelearningmastery.com/develop-a-deep-learning-caption-generation-model-in-python/
 - **It should be noted that at this time I run these commands, the epochs are just 10 (not the optimal epochs), then the caption might not be really good (BLEU-4  = 0.23), you could retrain longer to better your model.**
 
 # Contents
