@@ -38,6 +38,7 @@ def create_input_files(dataset, karpathy_json_path, image_folder, captions_per_i
     test_image_captions = []
     word_freq = Counter()
 
+    # Process the caption dataset
     for img in data['images']:
         captions = []
         for c in img['sentences']:
@@ -46,11 +47,13 @@ def create_input_files(dataset, karpathy_json_path, image_folder, captions_per_i
             if len(c['tokens']) <= max_len:
                 captions.append(c['tokens'])
 
+        # How could it be zero? Which case?
         if len(captions) == 0:
             continue
 
         path = os.path.join(image_folder, img['filepath'], img['filename']) if dataset == 'coco' else os.path.join(
             image_folder, img['filename'])
+        print(path)
 
         if img['split'] in {'train', 'restval'}:
             train_image_paths.append(path)
@@ -118,6 +121,7 @@ def create_input_files(dataset, karpathy_json_path, image_folder, captions_per_i
                     img = np.concatenate([img, img, img], axis=2)
                 img = imresize(img, (256, 256))
                 img = img.transpose(2, 0, 1)
+                # Convert to 256x256x3: input size of pre-train image feauture extraction model
                 assert img.shape == (3, 256, 256)
                 assert np.max(img) <= 255
 
