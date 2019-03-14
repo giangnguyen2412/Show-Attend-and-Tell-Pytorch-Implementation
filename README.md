@@ -1,32 +1,37 @@
-This is a **[PyTorch](https://pytorch.org) Tutorial to Image Captioning**.
-
-This is the first in [a series of tutorials](https://github.com/sgrvinod/Deep-Tutorials-for-PyTorch) I plan to write about _implementing_ cool models on your own with the amazing PyTorch library.
-
-Basic knowledge of PyTorch, convolutional and recurrent neural networks is assumed.
-
-If you're new to PyTorch, first read [Deep Learning with PyTorch: A 60 Minute Blitz](https://pytorch.org/tutorials/beginner/deep_learning_60min_blitz.html) and [Learning PyTorch with Examples](https://pytorch.org/tutorials/beginner/pytorch_with_examples.html).
-
-Questions, suggestions, or corrections can be posted as issues.
-
 I'm using `PyTorch 0.4` in `Python 3.6`.
 # How to retrain the model
 This is to guide newcomers how to retrain the model from beginning without reading code and change some points.
 
 - First, clone the repository and dataset to the same directory: 
-git clone https://github.com/yeulam1thienthan/Show-Attend-and-Tell-Pytorch-Implementation.git
-- Download and extract caption_datasets.zip to the same directory and rename to "caption data" directory
+`git clone https://github.com/yeulam1thienthan/Show-Attend-and-Tell-Pytorch-Implementation.git`
+- Download and extract `caption_datasets.zip` to the same directory and rename to `caption data` directory
 [Andrej Karpathy's training, validation, and test splits](http://cs.stanford.edu/people/karpathy/deepimagesent/caption_datasets.zip).
-- Download and extract val2014 and train2014 to 'caption data/'
+- Download and extract val2014 and train2014 to `caption data/`
 [Training (13GB)](http://images.cocodataset.org/zips/train2014.zip) and [Validation (6GB)](http://images.cocodataset.org/zips/val2014.zip) images.
 - Second: Run `python create_input_files.py`
 - Last: run `python train.py` to re-train the model.
 
 ### Run on a custom image
 - It should be noted that the input image to be captioned must be in JPG format. If not, the dimension will not match.
-- After some epochs, you now get the model BEST_checkpoint_coco_5_cap_per_img_5_min_word_freq.pth.tar in the repo directory. 
+- After some epochs, you now get the model `BEST_checkpoint_coco_5_cap_per_img_5_min_word_freq.pth.tar` in the repo directory. 
 - Run the following command to infer a new image: `python caption.py --img='img/PARROTS.JPG' --model='BEST_checkpoint_coco_5_cap_per_img_5_min_word_freq.pth.tar' --word_map='../caption data/WORDMAP_coco_5_cap_per_img_5_min_word_freq.json' --beam_size=5`
-- Result
 ![](./img/parrot_caption.png)
+
+### Try on a BDD100K image
+- BDD100K is a new driving dataset released by Berkerly with rich annotations and for multiple novel tasks in DL.
+- Image captioning for BDD100K
+- **Input image**
+
+![](./img/red_car.jpg)
+
+- **Output image**
+
+![](./img/red_car_caption.png)
+
+- The caption seem to be a bit general since we are not training the model on BDD100K but on MS-COCO dataset instead. . If you want to know more about how dataset is processed, take a look here: https://machinelearningmastery.com/develop-a-deep-learning-caption-generation-model-in-python/
+- **It should be noted that at this time I run these commands, the epochs are just 10 (not the optimal epochs), then the caption might not be really good (BLEU-4  = 0.23), you could retrain longer to better your model.**
+
+- **Training on custom dataset, for example BDD100K, we need to prepare image dataset and caption dataset. You should replace the caption dataset dataset_coco.json to your caption file**
 
 # Contents
 
@@ -165,6 +170,12 @@ It might be clear by now what our combined network looks like.
 ![Putting it all together](./img/model.png)
 
 - Once the Encoder generates the encoded image, we transform the encoding to create the initial hidden state `h` (and cell state `C`) for the LSTM Decoder.
+
+```python
+        # Initialize LSTM state
+        h, c = self.init_hidden_state(encoder_out)  # (batch_size, decoder_dim)
+```
+
 - At each decode step,
   - the encoded image and the previous hidden state is used to generate weights for each pixel in the Attention network.
   - the previously generated word and the weighted average of the encoding are fed to the LSTM Decoder to generate the next word.
@@ -307,7 +318,7 @@ At the very outset, we **sort the `N` images and captions by decreasing caption 
 
 We can iterate over each timestep, processing only the colored regions, which are the **_effective_ batch size** `N_t` at that timestep. The sorting allows the top `N_t` at any timestep to align with the outputs from the previous step. At the third timestep, for example, we process only the top 5 images, using the top 5 outputs from the previous step.
 
-This **iteration is performed _manually_ in a `for` loop** with a PyTorch [`LSTMCell`](https://pytorch.org/docs/master/nn.html#torch.nn.LSTM) instead of iterating automatically without a loop with a PyTorch [`LSTM`](https://pytorch.org/docs/master/nn.html#torch.nn.LSTM). This is because we need to execute the Attention mechanism between each decode step. An `LSTMCell` is a single timestep operation, whereas an `LSTM` would iterate over multiple timesteps continously and provide all outputs at once.
+This **iteration is performed _manually_ in a `for` loop** with a PyTorch [`LSTMCell`](https://pytorch.org/docs/master/nn.html#torch.nn.LSTM) instead of iterating automatically without a loop with a PyTorch [`LSTM`](https://pytorch.org/docs/master/nn.html#torch.nn.LSTM). This is because we need to execute the Attention mechanism between each decode step, the output of the previous LSTM block would be the input ofthe current LSTM block. An `LSTMCell` is a single timestep operation, whereas an `LSTM` would iterate over multiple timesteps continously and provide all outputs at once.
 
 We **compute the weights and attention-weighted encoding** at each timestep with the Attention network. In section `4.2.1` of the paper, they recommend **passing the attention-weighted encoding through a filter or gate**. This gate is a sigmoid activated linear transform of the Decoder's previous hidden state. The authors state that this helps the Attention network put more emphasis on the objects in the image.
 
@@ -492,3 +503,48 @@ With the release of PyTorch `0.4`, wrapping tensors as `Variable`s is no longer 
 - When a tensor is created from or modified using another tensor that allows gradients, then `requires_grad` will be set to `True`.
 - Tensors which are parameters of `torch.nn` layers will already have `requires_grad` set to `True`.
 
+__BLEU-n calculation?__(kmario23)
+
+The current codebase uses NLTK to calculate BLEU-4 scores. However, BLEU-1 to BLEU-n can be easily implemented, if you want to do that yourself. If you don't want to do that, you can then simply use NLTK for doing this which provides a nice interface to achieve this. (see code below)
+
+Here is the explanation of how BLEU score computation is defined:
+
+`BLEU-n` is just the geometric average of the n-gram _precision_.
+
+> (precisely it's string matching, at different n-gram levels,  between _references_ and _hypotheses_; that's why there has been much criticism on this metric. But, people still use it anyways because it has _stuck with the community_ for ages)
+
+For example, `BLEU-1` is simply the unigram precision, `BLEU-2` is the geometric average of unigram and bigram precision, `BLEU-3` is the geometric average of unigram, bigram, and trigram precision and so on.
+
+Having said that, if you want to compute specific n-gram BLEU scores, you have to pass a `weights` parameter when you [call `corpus_bleu`](https://github.com/sgrvinod/a-PyTorch-Tutorial-to-Image-Captioning/blob/master/eval.py#L171) . Note that if you ignore passing this `weights` parameter, then by default BLEU-4 scores are returned, which is what happening in the evaluation here.
+
+To compute, `BLEU-1` you can [call `copus_bleu`](https://github.com/sgrvinod/a-PyTorch-Tutorial-to-Image-Captioning/blob/master/eval.py#L171) with `weights` as
+
+```
+weights = (1.0/1.0, )
+corpus_bleu(references, hypotheses, weights)
+```
+To compute, `BLEU-2` you can [call `corpus_bleu`](https://github.com/sgrvinod/a-PyTorch-Tutorial-to-Image-Captioning/blob/master/eval.py#L171) with `weights` as
+
+```
+weights=(1.0/2.0, 1.0/2.0,)
+corpus_bleu(references, hypotheses, weights)
+```
+To compute, `BLEU-3` you can [call `corpus_bleu`](https://github.com/sgrvinod/a-PyTorch-Tutorial-to-Image-Captioning/blob/master/eval.py#L171) with `weights` as
+
+```
+weights=(1.0/3.0, 1.0/3.0, 1.0/3.0,)
+corpus_bleu(references, hypotheses, weights)
+```
+To compute, `BLEU-5` you can [call `corpus_bleu`](https://github.com/sgrvinod/a-PyTorch-Tutorial-to-Image-Captioning/blob/master/eval.py#L171) with `weights` as
+
+```
+weights=(1.0/5.0, 1.0/5.0, 1.0/5.0, 1.0/5.0, 1.0/5.0,)
+corpus_bleu(references, hypotheses, weights)
+```
+Here is a demonstration using a toy example adapted from NLTK webpage:
+
+![bleu-n-grams](https://user-images.githubusercontent.com/5196297/51448959-1f271e00-1d2a-11e9-9b9a-ab3f94cceb9b.png)
+
+Note how the BLEU score keeps decreasing as we increase the number `n` in n-grams using the `weights` parameter. Also, note how not passing the `weights` parameter yields the same score as passing a `weights` parameter for quadrigram because that's the default weight NLTK passes, if we don't pass one.
+
+Refer this page for more information on the [NLTK BLEU score implementation](https://www.nltk.org/_modules/nltk/translate/bleu_score.html)
