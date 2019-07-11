@@ -1,9 +1,81 @@
 import torch
 from torch import nn
 import torchvision
+from torch.nn import functional as F
+from torch import autograd
+from torch.autograd import Variable
+import utils
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
+x = lambda a: a+ 10
+x(10)
+
+class EWC(nn.Module): # Cho encoder va decoder ke thua ewc
+    def __init__(self, lamda=40):
+        # Configurations.
+        super().__init__()
+        self.lamda = lamda
+
+    def _is_on_cuda(self):
+        return next(self.parameters()).is_cuda
+
+    def estimate_fisher(self, dataset, sample_size, batch_size=32):
+        # sample loglikelihoods from the dataset.
+        data_loader = utils.get_data_loader(dataset, batch_size)
+        loglikelihoods = []
+        for x, y in data_loader:
+            x = x.view(batch_size, -1)
+            x = Variable(x).cuda() if self._is_on_cuda() else Variable(x)
+            y = Variable(y).cuda() if self._is_on_cuda() else Variable(y)
+            loglikelihoods.append(
+                F.log_softmax(self(x), dim=1)[range(batch_size), y.data]
+            )
+            if len(loglikelihoods) >= sample_size // batch_size:
+                break
+        # estimate the fisher information of the parameters.
+        loglikelihoods = torch.cat(loglikelihoods).unbind()
+        loglikelihood_grads = zip(*[autograd.grad(
+            l, self.parameters(),
+            retain_graph=(i < len(loglikelihoods))
+        ) for i, l in enumerate(loglikelihoods, 1)])
+        loglikelihood_grads = [torch.stack(gs) for gs in loglikelihood_grads]
+        fisher_diagonals = [(g ** 2).mean(0) for g in loglikelihood_grads]
+        param_names = [
+            n.replace('.', '__') for n, p in self.named_parameters()
+        ]
+        return {n: f.detach() for n, f in zip(param_names, fisher_diagonals)}
+
+    def consolidate(self, fisher):
+        for n, p in self.named_parameters():
+            n = n.replace('.', '__')
+            self.register_buffer('{}_mean'.format(n), p.data.clone())
+            self.register_buffer('{}_fisher'
+                                 .format(n), fisher[n].data.clone())
+
+    def ewc_loss(self, cuda=False):
+        try:
+            losses = []
+            for n, p in self.named_parameters():
+                # retrieve the consolidated mean and fisher information.
+                n = n.replace('.', '__')
+                mean = getattr(self, '{}_mean'.format(n))
+                fisher = getattr(self, '{}_fisher'.format(n))
+                # wrap mean and fisher in variables.
+                mean = Variable(mean)
+                fisher = Variable(fisher)
+                # calculate a ewc loss. (assumes the parameter's prior as
+                # gaussian distribution with the estimated mean and the
+                # estimated cramer-rao lower bound variance, which is
+                # equivalent to the inverse of fisher information)
+                losses.append((fisher * (p-mean)**2).sum())
+            return (self.lamda/2)*sum(losses)
+        except AttributeError:
+            # ewc loss is 0 if there's no consolidated parameters.
+            return (
+                Variable(torch.zeros(1)).cuda() if cuda else
+                Variable(torch.zeros(1))
+            )
 
 class Encoder(nn.Module):
     """
@@ -13,6 +85,7 @@ class Encoder(nn.Module):
     def __init__(self, encoded_image_size=14):
         super(Encoder, self).__init__()
         self.enc_image_size = encoded_image_size
+        self.lamda = 40
 
         resnet = torchvision.models.resnet101(pretrained=True)  # pretrained ImageNet ResNet-101
 
@@ -49,6 +122,67 @@ class Encoder(nn.Module):
         for c in list(self.resnet.children())[5:]:
             for p in c.parameters():
                 p.requires_grad = fine_tune
+
+    # FROM HERE EWC
+    def _is_on_cuda(self):
+        return next(self.parameters()).is_cuda
+
+    def estimate_fisher(self, dataset, sample_size, batch_size=32):
+        # sample loglikelihoods from the dataset.
+        data_loader = utils.get_data_loader(dataset, batch_size)
+        loglikelihoods = []
+        for x, y in data_loader:
+            x = x.view(batch_size, -1)
+            x = Variable(x).cuda() if self._is_on_cuda() else Variable(x)
+            y = Variable(y).cuda() if self._is_on_cuda() else Variable(y)
+            loglikelihoods.append(
+                F.log_softmax(self(x), dim=1)[range(batch_size), y.data]
+            )
+            if len(loglikelihoods) >= sample_size // batch_size:
+                break
+        # estimate the fisher information of the parameters.
+        loglikelihoods = torch.cat(loglikelihoods).unbind()
+        loglikelihood_grads = zip(*[autograd.grad(
+            l, self.parameters(),
+            retain_graph=(i < len(loglikelihoods))
+        ) for i, l in enumerate(loglikelihoods, 1)])
+        loglikelihood_grads = [torch.stack(gs) for gs in loglikelihood_grads]
+        fisher_diagonals = [(g ** 2).mean(0) for g in loglikelihood_grads]
+        param_names = [
+            n.replace('.', '__') for n, p in self.named_parameters()
+        ]
+        return {n: f.detach() for n, f in zip(param_names, fisher_diagonals)}
+
+    def consolidate(self, fisher):
+        for n, p in self.named_parameters():
+            n = n.replace('.', '__')
+            self.register_buffer('{}_mean'.format(n), p.data.clone())
+            self.register_buffer('{}_fisher'
+                                 .format(n), fisher[n].data.clone())
+
+    def ewc_loss(self, cuda=False):
+        try:
+            losses = []
+            for n, p in self.named_parameters():
+                # retrieve the consolidated mean and fisher information.
+                n = n.replace('.', '__')
+                mean = getattr(self, '{}_mean'.format(n))
+                fisher = getattr(self, '{}_fisher'.format(n))
+                # wrap mean and fisher in variables.
+                mean = Variable(mean)
+                fisher = Variable(fisher)
+                # calculate a ewc loss. (assumes the parameter's prior as
+                # gaussian distribution with the estimated mean and the
+                # estimated cramer-rao lower bound variance, which is
+                # equivalent to the inverse of fisher information)
+                losses.append((fisher * (p-mean)**2).sum())
+            return (self.lamda/2)*sum(losses)
+        except AttributeError:
+            # ewc loss is 0 if there's no consolidated parameters.
+            return (
+                Variable(torch.zeros(1)).cuda() if cuda else
+                Variable(torch.zeros(1))
+            )
 
 
 class Attention(nn.Module):
@@ -101,6 +235,8 @@ class DecoderWithAttention(nn.Module):
         :param dropout: dropout
         """
         super(DecoderWithAttention, self).__init__()
+
+        self.lamda = 40
 
         self.encoder_dim = encoder_dim
         self.attention_dim = attention_dim
@@ -212,3 +348,64 @@ class DecoderWithAttention(nn.Module):
             alphas[:batch_size_t, t, :] = alpha
 
         return predictions, encoded_captions, decode_lengths, alphas, sort_ind
+
+        # FROM HERE EWC
+    def _is_on_cuda(self):
+        return next(self.parameters()).is_cuda
+
+    def estimate_fisher(self, dataset, sample_size, batch_size=32):
+        # sample loglikelihoods from the dataset.
+        data_loader = utils.get_data_loader(dataset, batch_size)
+        loglikelihoods = []
+        for x, y in data_loader:
+            x = x.view(batch_size, -1)
+            x = Variable(x).cuda() if self._is_on_cuda() else Variable(x)
+            y = Variable(y).cuda() if self._is_on_cuda() else Variable(y)
+            loglikelihoods.append(
+                F.log_softmax(self(x), dim=1)[range(batch_size), y.data]
+            )
+            if len(loglikelihoods) >= sample_size // batch_size:
+                break
+        # estimate the fisher information of the parameters.
+        loglikelihoods = torch.cat(loglikelihoods).unbind()
+        loglikelihood_grads = zip(*[autograd.grad(
+            l, self.parameters(),
+            retain_graph=(i < len(loglikelihoods))
+        ) for i, l in enumerate(loglikelihoods, 1)])
+        loglikelihood_grads = [torch.stack(gs) for gs in loglikelihood_grads]
+        fisher_diagonals = [(g ** 2).mean(0) for g in loglikelihood_grads]
+        param_names = [
+            n.replace('.', '__') for n, p in self.named_parameters()
+        ]
+        return {n: f.detach() for n, f in zip(param_names, fisher_diagonals)}
+
+    def consolidate(self, fisher):
+        for n, p in self.named_parameters():
+            n = n.replace('.', '__')
+            self.register_buffer('{}_mean'.format(n), p.data.clone())
+            self.register_buffer('{}_fisher'
+                                 .format(n), fisher[n].data.clone())
+
+    def ewc_loss(self, cuda=False):
+        try:
+            losses = []
+            for n, p in self.named_parameters():
+                # retrieve the consolidated mean and fisher information.
+                n = n.replace('.', '__')
+                mean = getattr(self, '{}_mean'.format(n))
+                fisher = getattr(self, '{}_fisher'.format(n))
+                # wrap mean and fisher in variables.
+                mean = Variable(mean)
+                fisher = Variable(fisher)
+                # calculate a ewc loss. (assumes the parameter's prior as
+                # gaussian distribution with the estimated mean and the
+                # estimated cramer-rao lower bound variance, which is
+                # equivalent to the inverse of fisher information)
+                losses.append((fisher * (p - mean) ** 2).sum())
+            return (self.lamda / 2) * sum(losses)
+        except AttributeError:
+            # ewc loss is 0 if there's no consolidated parameters.
+            return (
+                Variable(torch.zeros(1)).cuda() if cuda else
+                Variable(torch.zeros(1))
+            )
