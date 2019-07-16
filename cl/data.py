@@ -20,17 +20,17 @@ def get_dataset(name, train=True, download=True, permutation=None):
     ])
 
     return dataset_class(
-        './datasets/{name}'.format(name=name), train=train,
-        download=download, transform=dataset_transform,
+        './datasets/{name}'.format(name=name), annFile = None,
+        transform=dataset_transform, target_transform=None
     )
 
 
 AVAILABLE_DATASETS = {
-    'mnist': datasets.MNIST
+    'coco': datasets.CocoCaptions
 }
 
 AVAILABLE_TRANSFORMS = {
-    'mnist': [
+    'coco': [
         transforms.ToTensor(),
         transforms.ToPILImage(),
         transforms.Pad(2),
@@ -40,5 +40,5 @@ AVAILABLE_TRANSFORMS = {
 }
 
 DATASET_CONFIGS = {
-    'mnist': {'size': 32, 'channels': 1, 'classes': 10}
+    'coco': {'size': 256, 'channels': 3, 'classes': 80}
 }
