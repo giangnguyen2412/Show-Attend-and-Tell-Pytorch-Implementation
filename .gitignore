@@ -2,3 +2,8 @@ __pycache__/
 cl/__pycache__/
 .idea/
 best/
+*.tar
+caption data/
+datasets/
+.idea/caption.iml
+.idea/misc.xml
