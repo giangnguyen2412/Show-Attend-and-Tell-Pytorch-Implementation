@@ -2,7 +2,7 @@
 This is to guide newcomers how to retrain the model from beginning without reading code and change some points.
 
 - First, clone the repository and dataset to the same directory: 
-`git clone https://github.com/yeulam1thienthan/Show-Attend-and-Tell-Pytorch-Implementation.git`
+`git clone https://github.com/luulinh90s/Show-Attend-and-Tell-Pytorch-Implementation.git`
 - Download and extract `caption_datasets.zip` to the same directory and rename to `caption data` directory
 [Andrej Karpathy's training, validation, and test splits](http://cs.stanford.edu/people/karpathy/deepimagesent/caption_datasets.zip).
 - Download and extract val2014 and train2014 to `caption data/`
