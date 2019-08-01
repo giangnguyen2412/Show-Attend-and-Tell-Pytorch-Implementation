@@ -1,4 +1,3 @@
-I'm using `PyTorch 0.4` in `Python 3.6`.
 # How to retrain the model
 This is to guide newcomers how to retrain the model from beginning without reading code and change some points.
 
